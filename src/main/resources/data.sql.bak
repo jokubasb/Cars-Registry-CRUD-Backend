@@ -1,0 +1,13 @@
+DROP TABLE IF EXISTS cars;
+
+CREATE TABLE cars (
+  id INT AUTO_INCREMENT  PRIMARY KEY,
+  manufacturer VARCHAR(250) NOT NULL,
+  model VARCHAR(250) NOT NULL,
+  year INTEGER DEFAULT NULL
+);
+
+INSERT INTO cars (manufacturer, model, year) VALUES
+  ('Toyota', 'Corolla', 2010),
+  ('Volvo', 'V90', 2020),
+  ('Subaru', 'Impreza', 2005);
