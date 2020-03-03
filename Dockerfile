@@ -1,4 +1,5 @@
-FROM openjdk:8-jdk-alpine
-ARG JAR_FILE=target/*.jar
-COPY ${JAR_FILE} app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
+FROM alpine:edge
+MAINTAINER baeldung.com
+RUN apk add --no-cache openjdk8
+COPY files/UnlimitedJCEPolicyJDK8/* \
+  /usr/lib/jvm/java-1.8-openjdk/jre/lib/security/

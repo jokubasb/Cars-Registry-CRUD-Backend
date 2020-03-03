@@ -8,16 +8,9 @@ import java.util.Map;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.jokubas.lab1.model.Car;
 import com.jokubas.lab1.repository.CarRepository;
@@ -34,6 +27,7 @@ public class CarController {
         return carRepository.findAll();
     }
 
+    //get
     @GetMapping("/cars/{id}")
     public ResponseEntity <Car> getCarById(@PathVariable(value = "id") Long carId) throws ResourceNotFoundException{
         Car car = carRepository.findById(carId)
@@ -41,11 +35,14 @@ public class CarController {
         return ResponseEntity.ok().body(car);
     }
 
+    //create
     @PostMapping("/cars")
-    public Car createCar(@Valid @RequestBody Car car) {
-        return carRepository.save(car);
+    @ResponseStatus(value = HttpStatus.CREATED)
+    public ResponseEntity <Car> createCar(@Valid @RequestBody Car car) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(carRepository.save(car));
     }
 
+    //update
     @PutMapping("/cars/{id}")
     public ResponseEntity <Car> updateCar(@PathVariable(value = "id") Long carId,
                                           @Valid @RequestBody Car carDetails) throws ResourceNotFoundException{
@@ -56,10 +53,12 @@ public class CarController {
         car.setModel(carDetails.getModel());
         car.setYear(carDetails.getYear());
         final Car updatedCar = carRepository.save(car);
-        return ResponseEntity.ok(updatedCar);
+        return ResponseEntity.status(HttpStatus.CREATED).body(updatedCar);
     }
 
-    @DeleteMapping("/car/{id}")
+    //delete
+    @DeleteMapping("/cars/{id}")
+    @ResponseStatus(value = HttpStatus.NO_CONTENT)
     public Map <String, Boolean> deleteCar(@PathVariable(value = "id") Long carId) throws ResourceNotFoundException{
         Car car = carRepository.findById(carId)
                 .orElseThrow(()-> new ResourceNotFoundException("Car not found for this id :: " + carId));
