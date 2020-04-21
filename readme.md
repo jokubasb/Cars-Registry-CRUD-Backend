@@ -37,6 +37,6 @@ curl -d '{
     "number": "+3706123456",
     "email": "vardeniux@mail.com"
 }' -H 'Content-Type: application/json' -X PUT http://localhost/api/v1/ownedcars/2```
-
+```
 ### DELETE:
 ```curl -X DELETE http://localhost/api/v1/ownedcars/1```
