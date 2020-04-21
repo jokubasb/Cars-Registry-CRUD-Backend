@@ -15,15 +15,17 @@ public class Car {
     private String manufacturer;
     private String model;
     private int year;
+    private int ownerId;
 
     public Car(){
 
     }
 
-    public Car(String manufacturer, String model, int year){
+    public Car(String manufacturer, String model, int year, int ownerId){
         this.manufacturer = manufacturer;
         this.model = model;
         this.year = year;
+        this.ownerId = ownerId;
     }
 
     @Id
@@ -57,6 +59,14 @@ public class Car {
     }
     public void setYear(int year) {
         this.year = year;
+    }
+
+    @Column(name = "owner", nullable = false)
+    public int getOwnerId(){
+        return ownerId;
+    }
+    public void setOwnerId(int id){
+        this.ownerId = id;
     }
 
 }
