@@ -59,6 +59,4 @@ public class Owner{
     public String getEmail(){
         return email;
     }
-
-
 }

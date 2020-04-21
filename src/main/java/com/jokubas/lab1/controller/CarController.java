@@ -15,6 +15,8 @@ import javax.validation.Valid;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -43,6 +45,51 @@ import com.jokubas.lab1.exception.ResourceNotFoundException;
 public class CarController {
     @Autowired
     private CarRepository carRepository;
+
+    
+    @EventListener(ApplicationReadyEvent.class)
+    public void startup() {
+        //initial post data for other web service
+        try {
+            Owner owner = new Owner();
+            owner.setId(10);
+            owner.setName("Edwin");
+            owner.setSurname("Bird");
+            owner.setNumber("606-434-2825");
+            owner.setEmail("EdwinRBird@armyspy.com");
+            final String uri = "http://contacts:5000/contacts/";
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+            HttpEntity<Owner> entity = new HttpEntity<>(owner, headers);
+            restTemplate.postForObject(uri, entity, String.class);
+            owner.setId(20);
+            owner.setName("Sarah");
+            owner.setSurname("Patterson");
+            owner.setNumber("321-512-3924");
+            owner.setEmail("SarahHPatterson@rhyta.com");
+            entity = new HttpEntity<>(owner, headers);
+            restTemplate.postForObject(uri, entity, String.class);
+            owner.setId(30);
+            owner.setName("Alisha");
+            owner.setSurname("Hayner");
+            owner.setNumber("678-237-3632");
+            owner.setEmail("AlishaJHayner@armyspy.com");
+            entity = new HttpEntity<>(owner, headers);
+            restTemplate.postForObject(uri, entity, String.class);
+            owner.setId(40);
+            owner.setName("Amanda");
+            owner.setSurname("Moorhead");
+            owner.setNumber("989-397-1216");
+            owner.setEmail("AmandaCMoorhead@teleworm.us");
+            entity = new HttpEntity<>(owner, headers);
+            restTemplate.postForObject(uri, entity, String.class);
+        } catch (DataAccessException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong data structure", ex);
+        }
+    }
+    
     
 
     @GetMapping("/cars")
@@ -70,7 +117,6 @@ public class CarController {
         } catch (DataAccessException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong data structure", ex);
         }
-
     }
 
     // update
@@ -105,9 +151,13 @@ public class CarController {
 
     @GetMapping("/owners")
     public Owner[] getAllOwners() throws JsonParseException, JsonMappingException, IOException {
-        final String uri = "http://localhost:5000/contacts";
+        final String uri = "http://contacts:5000/contacts";
         RestTemplate restTemplate = new RestTemplate();
-        return restTemplate.getForObject(uri, Owner[].class);
+        try{
+            return restTemplate.getForObject(uri, Owner[].class);
+        }catch (Exception e){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found", e);
+        }
     }
 
 
@@ -115,14 +165,13 @@ public class CarController {
     @GetMapping("/owners/{id}")
     public ResponseEntity<Owner> getOwnerById(@PathVariable(value = "id") Long id) throws ResourceNotFoundException,
             JsonParseException, JsonMappingException, IOException {
-        final String uri = "http://localhost:5000/contacts/" + id;
+        final String uri = "http://contacts:5000/contacts/" + id;
         RestTemplate restTemplate = new RestTemplate();
         try{
             return ResponseEntity.ok().body(restTemplate.getForObject(uri, Owner.class));
         }catch (Exception e){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found", e);
         }
-
     }
 
     
@@ -133,15 +182,11 @@ public class CarController {
             final Owner saveOwner = owner;
             URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                     .buildAndExpand(saveOwner.getId()).toUri();
-            final String uri = "http://localhost:5000/contacts/";
+            final String uri = "http://contacts:5000/contacts/";
             RestTemplate restTemplate = new RestTemplate();
-             // create headers
             HttpHeaders headers = new HttpHeaders();
-            // set `content-type` header
             headers.setContentType(MediaType.APPLICATION_JSON);
-            // set `accept` header
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-            // build the request
             HttpEntity<Owner> entity = new HttpEntity<>(saveOwner, headers);
             return ResponseEntity.created(location).body(restTemplate.postForObject(uri, entity, String.class));
         } catch (DataAccessException ex) {
@@ -152,18 +197,14 @@ public class CarController {
     @PutMapping("/owners/{id}")
     public ResponseEntity<Owner> updateOwner(@PathVariable(value = "id") Long id, @Valid @RequestBody Owner ownerDetails)
             throws ResourceNotFoundException {
-        final String uri = "http://localhost:5000/contacts/" + id;
+        final String uri = "http://contacts:5000/contacts/" + id;
         try {
             RestTemplate restTemplate = new RestTemplate();
-             // create headers
-             HttpHeaders headers = new HttpHeaders();
-             // set `content-type` header
-             headers.setContentType(MediaType.APPLICATION_JSON);
-             // set `accept` header
-             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-             // build the request
-             HttpEntity<Owner> entity = new HttpEntity<>(ownerDetails, headers);
-             restTemplate.put(uri, entity, Owner.class);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+            HttpEntity<Owner> entity = new HttpEntity<>(ownerDetails, headers);
+            restTemplate.put(uri, entity, Owner.class);
             return ResponseEntity.status(HttpStatus.OK).body(ownerDetails);
         } catch (Exception ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong data structure", ex);
@@ -173,12 +214,16 @@ public class CarController {
     @DeleteMapping("/owners/{id}")
     @ResponseStatus(value = HttpStatus.NO_CONTENT)
     public Map<String, Boolean> deleteOwner(@PathVariable(value = "id") Long id) throws ResourceNotFoundException {
-        final String uri = "http://localhost:5000/contacts/" + id;
-        RestTemplate restTemplate = new RestTemplate();
-        restTemplate.delete(uri, 10);
-        Map<String, Boolean> response = new HashMap<>();
-        response.put("deleted", Boolean.TRUE);
-        return response;
+        try{
+            final String uri = "http://contacts:5000/contacts/" + id;
+            RestTemplate restTemplate = new RestTemplate();
+            restTemplate.delete(uri, 10);
+            Map<String, Boolean> response = new HashMap<>();
+            response.put("deleted", Boolean.TRUE);
+            return response;
+        }catch (Exception e){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found", e);
+        }
     }
 
     //----------------------------------------------------------------------------------------------------------------------------------
@@ -186,24 +231,28 @@ public class CarController {
     @GetMapping("/ownedcars")
     public List<CarAndOwner> getAllOwnedCars() throws JsonParseException, JsonMappingException, IOException {
         List<Car> cars = carRepository.findAll();
-        final String uri = "http://localhost:5000/contacts";
+        final String uri = "http://contacts:5000/contacts";
         RestTemplate restTemplate = new RestTemplate();
         String response = restTemplate.getForObject(uri, String.class);
         ObjectMapper objectMapper = new ObjectMapper();
         List<Owner> owners = objectMapper.readValue(response, new TypeReference<List<Owner>>(){});
         List<CarAndOwner> ownedCars = new ArrayList<CarAndOwner>();
-        for(Car car : cars){
-            for(Owner owner : owners){
-                if(owner.getId() == car.getOwnerId()){
-                    CarAndOwner cao = new CarAndOwner();
-                    BeanUtils.copyProperties(car, cao);
-                    BeanUtils.copyProperties(owner, cao);
-                    cao.setId((int)car.getId());
-                    ownedCars.add(cao);
+        try{
+            for(Car car : cars){
+                for(Owner owner : owners){
+                    if(owner.getId() == car.getOwnerId()){
+                        CarAndOwner cao = new CarAndOwner();
+                        BeanUtils.copyProperties(car, cao);
+                        BeanUtils.copyProperties(owner, cao);
+                        cao.setId((int)car.getId());
+                        ownedCars.add(cao);
+                    }   
                 }
             }
+            return ownedCars;
+        }catch (Exception e){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found", e);
         }
-        return ownedCars;
     }
     
     // get
@@ -211,7 +260,7 @@ public class CarController {
     public ResponseEntity<CarAndOwner> getOwnedCarById(@PathVariable(value = "id") Long carId) throws ResourceNotFoundException {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new ResourceNotFoundException("Car not found for this id :: " + carId));
-        final String uri = "http://localhost:5000/contacts/" + car.getOwnerId();
+        final String uri = "http://contacts:5000/contacts/" + car.getOwnerId();
         RestTemplate restTemplate = new RestTemplate();
         try{
             Owner owner = restTemplate.getForObject(uri, Owner.class);
@@ -235,7 +284,6 @@ public class CarController {
         try {
             Car car = new Car();
             BeanUtils.copyProperties(carandowner, car);
-            //car.setOwnerId((int) car.getId());
             Car saveCar = carRepository.save(car);
             car = carRepository.findById(saveCar.getId()).orElseThrow(() -> new ResourceNotFoundException("Car not found for this id :: "));
             car.setOwnerId((int)saveCar.getId()*10);
@@ -251,7 +299,7 @@ public class CarController {
                     .buildAndExpand(saveCar.getId()).toUri();
             
             //post to contacts
-            final String uri = "http://localhost:5000/contacts/";
+            final String uri = "http://contacts:5000/contacts/";
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -263,40 +311,60 @@ public class CarController {
         } catch (DataAccessException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong data structure", ex);
         }
-
     }
 
-    /*TODO
+    
     // update
     @PutMapping("/ownedcars/{id}")
-    public ResponseEntity<Car> updateCar(@PathVariable(value = "id") Long carId, @Valid @RequestBody Car carDetails)
+    public ResponseEntity<CarAndOwner> updateOwnedCar(@PathVariable(value = "id") Long id, @Valid @RequestBody CarAndOwner ownedCarDetails)
             throws ResourceNotFoundException {
-        Car car = carRepository.findById(carId)
-                .orElseThrow(() -> new ResourceNotFoundException("Car not found for this id :: " + carId));
+        Car car = carRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Car not found for this id :: " + id));
         try {
-            car.setManufacturer(carDetails.getManufacturer());
-            car.setModel(carDetails.getModel());
-            car.setYear(carDetails.getYear());
-            final Car updatedCar = carRepository.save(car);
-            return ResponseEntity.status(HttpStatus.OK).body(updatedCar);
+            car.setManufacturer(ownedCarDetails.getManufacturer());
+            car.setModel(ownedCarDetails.getModel());
+            car.setYear(ownedCarDetails.getYear());
+            carRepository.save(car);
+            ownedCarDetails.setId((int)car.getId());
+
+            final String uri = "http://contacts:5000/contacts/" + car.getOwnerId();
+            RestTemplate restTemplate = new RestTemplate();
+            Owner owner = restTemplate.getForObject(uri, Owner.class);
+            
+            owner.setName(ownedCarDetails.getName());
+            owner.setSurname(ownedCarDetails.getSurname());
+            owner.setEmail(ownedCarDetails.getEmail());
+            owner.setNumber(ownedCarDetails.getNumber());
+            owner.setId(0);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+            HttpEntity<Owner> entity = new HttpEntity<>(owner, headers);
+            restTemplate.put(uri, entity, Owner.class);
+
+            return ResponseEntity.status(HttpStatus.OK).body(ownedCarDetails);
         } catch (Exception ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong data structure", ex);
         }
     }
-
+    
     // delete
     @DeleteMapping("/ownedcars/{id}")
     @ResponseStatus(value = HttpStatus.NO_CONTENT)
-    public Map<String, Boolean> deleteCar(@PathVariable(value = "id") Long carId) throws ResourceNotFoundException {
-        Car car = carRepository.findById(carId)
-                .orElseThrow(() -> new ResourceNotFoundException("Car not found for this id :: " + carId));
-
+    public Map<String, Boolean> deleteOwnedCar(@PathVariable(value = "id") Long id) throws ResourceNotFoundException {
+        Car car = carRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Car not found for this id :: " + id));
         carRepository.delete(car);
-        Map<String, Boolean> response = new HashMap<>();
-        response.put("deleted", Boolean.TRUE);
-        return response;
+
+        final String uri = "http://contacts:5000/contacts/" + car.getOwnerId();
+        RestTemplate restTemplate = new RestTemplate();
+        try{
+            restTemplate.delete(uri);
+            Map<String, Boolean> response = new HashMap<>();
+            response.put("deleted", Boolean.TRUE);
+            return response;
+        }catch (Exception e){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found", e);
+        }
     }
-    */
-
-
 }

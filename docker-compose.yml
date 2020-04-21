@@ -1,9 +1,22 @@
 version: '3.3'
 
 services:
-  web-server:
+  contacts:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "5000:5000"
+    restart: always
+    container_name: contacts
+
+  car-registry:
     build: .
+    depends_on: 
+      - contacts
     ports:
       - "80:8080"
     restart: always
     container_name: car_registry
+
+  

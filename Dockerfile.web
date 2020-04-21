@@ -1,0 +1,5 @@
+FROM maven:3.6.1-jdk-8-alpine AS build
+COPY /contacts/src /home/app/contacts/src
+COPY /contacts/pom.xml /home/app/contacts
+EXPOSE 5000
+ENTRYPOINT ["mvn", "-f", "/home/app/contacts/pom.xml", "spring-boot:run"]
