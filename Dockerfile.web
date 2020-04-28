@@ -1,5 +1,17 @@
-FROM maven:3.6.1-jdk-8-alpine AS build
-COPY /contacts/src /home/app/contacts/src
-COPY /contacts/pom.xml /home/app/contacts
-EXPOSE 5000
-ENTRYPOINT ["mvn", "-f", "/home/app/contacts/pom.xml", "spring-boot:run"]
+FROM maven:latest AS build
+COPY /contacts/src /home/app/src
+COPY /contacts/pom.xml /home/app
+WORKDIR /home/app
+ENTRYPOINT ["mvn", "spring-boot:run"]
+
+
+#FROM maven:3.6.0-jdk-11-slim AS build
+#COPY /contacts/src /home/app/src
+#COPY /contacts/pom.xml /home/app
+#WORKDIR /home/app
+#RUN mvn clean install
+
+#ROM openjdk:11-jre-slim
+#COPY --from=build /home/app/target/app.jar /usr/local/lib/contacts.jar
+#EXPOSE 8080
+#ENTRYPOINT ["java","-jar","/usr/local/lib/contacts.jar"]
