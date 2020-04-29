@@ -63,7 +63,7 @@ public class CarController {
 
     @EventListener(ApplicationReadyEvent.class)
     public void startup() {
-        initialData();
+        //initialData();
     }
 
     @GetMapping("/cars")
@@ -92,6 +92,8 @@ public class CarController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong data structure", ex);
         }
     }
+
+
 
     // update
     @PutMapping("/cars/{id}")
@@ -216,6 +218,44 @@ public class CarController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong data structure", ex);
         }
     }
+
+        // create array
+        @PostMapping("/ownedcarsArray")
+        @ResponseStatus(value = HttpStatus.CREATED)
+        public ResponseEntity<Object> createOwnedCarArray(@Valid @RequestBody List<CarAndOwner> carandowner)
+                throws ResourceNotFoundException {
+            running = pingHost("contacts", 5000, 500);
+            Car saveCar = new Car();
+            try {
+                for(CarAndOwner cao : carandowner){
+                    Car car = new Car();
+                    BeanUtils.copyProperties(cao, car);
+                    saveCar = carRepository.save(car);
+                    car = carRepository.findById(saveCar.getId()).orElseThrow(() -> new ResourceNotFoundException("Car not found for this id :: "));
+                    car.setOwnerId((int)saveCar.getId()*10);
+                    saveCar = carRepository.save(car);
+                    if(running){
+                        Owner owner = new Owner();
+                        BeanUtils.copyProperties(cao, owner);
+                        owner.setId(saveCar.getOwnerId());
+                        cao.setId(((int)saveCar.getId()));
+                        final Owner saveOwner = owner;
+                        postObject(saveOwner);
+                    }
+                }
+                
+                URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                        .buildAndExpand(saveCar.getId()).toUri();
+                if(running){
+                    return ResponseEntity.created(location).body(carandowner);
+                }else{
+                    return ResponseEntity.created(location).body(saveCar);
+                }
+            } catch (DataAccessException ex) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong data structure", ex);
+            }
+        }
+
 
     
     // update
