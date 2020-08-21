@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://www.baeldung.com/springsoap/gen"
+           targetNamespace="http://www.baeldung.com/springsoap/gen" elementFormDefault="qualified">
+ 
+    <xs:element name="getCarsRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="id" type="xs:long"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+ 
+    <xs:element name="getCarsResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="car" type="tns:car"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+ 
+    <xs:complexType name="car">
+        <xs:sequence>
+            <xs:element name="id" type="xs:long"/>
+            <xs:element name="manufacturer" type="xs:string"/>
+            <xs:element name="model" type="xs:string"/>
+            <xs:element name="year" type="xs:int"/>
+            <xs:element name="ownerId" type="xs:int"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
